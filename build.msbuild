@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="CreatePackage" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <DownloadNuGetExe>true</DownloadNuGetExe>
+    <SolutionDir>$(MSBuildThisFileDirectory)..\casablanca\</SolutionDir>
+    <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
+    <Platform Condition="'$(Platform)'==''">Win32</Platform>
+    <PlatformToolset>v120</PlatformToolset>
+    <ApplicationType Condition="'ApplicationType' != ''">Desktop</ApplicationType>
+    <OutputPath Condition="'$(OutputPath)' == ''">$(MSBuildThisFileDirectory)bin\$(Platform)\$(Configuration)\</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+    <NuGetExePath>$(MSBuildThisFileDirectory).nuget\NuGet.exe</NuGetExePath>
+    <VisualStudioVersionMajor>$(VisualStudioVersion.Substring(0, 2))</VisualStudioVersionMajor>
+    <PlatformToolset Condition="'$(PlatformToolset)' == ''">v$(VisualStudioVersionMajor)0</PlatformToolset>
+    <ProjectDir>$(SolutionDir)Release\src\build\vs$(VisualStudioVersionMajor)\</ProjectDir>
+    <ProjectFileName>casablanca$(PlatformToolset.Substring(1)).vcxproj</ProjectFileName>
+    <ProjectPath>$(ProjectDir)$(ProjectFileName)</ProjectPath>    
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory).nuget\nuget.targets" />
+
+  <Target Name="CreatePackage">
+    <MSBuild Targets="_DownloadNuGet"
+      Projects="$(MSBuildThisFileDirectory).nuget\NuGet.targets"
+      Properties="SolutionDir=$(MSBuildThisFileDirectory)" />
+   
+    <PropertyGroup>
+      <PackageSource>$(MSBuildThisFileDirectory)bin\Package\</PackageSource>
+      <PackageSourceNative>$(PackageSource)build\native\</PackageSourceNative>
+      <NuGetArtifactsPath>$(SolutionDir)Release\nuget\</NuGetArtifactsPath>
+      <PackageOutputDir>$(MSBuildThisFileDirectory)bin</PackageOutputDir>
+      <AdaptNuSpec>
+      <![CDATA[
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output method="xml" indent="yes"/>
+
+  <xsl:template match="@* | node()">
+    <xsl:copy>
+      <xsl:apply-templates select="@* | node()"/>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="files" />
+</xsl:stylesheet>
+]]>
+      </AdaptNuSpec>
+    </PropertyGroup>
+
+    <Exec Command="$(NuGetCommand) restore $(ProjectDir)packages.config -SolutionDirectory $(SolutionDir)" /> 
+      
+    <MSBuild Targets="Build"
+      Projects="$(ProjectPath)"
+      Properties="Configuration=$(Configuration);Platform=$(Platform);PlatformToolset=$(PlatformToolset);OutputPath=$(OutputPath);OutDir=$(OutDir)" />
+
+    <ItemGroup>
+      <Dll Include="$(OutputPath)*.dll;$(OutputPath)*.pdb" />
+      <Lib Include="$(OutputPath)*.lib;" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(Dll)" DestinationFolder="$(PackageSourceNative)\bin\$(Platform)\$(PlatformToolset)\$(Configuration)\$(ApplicationType)\" />
+    <Copy SourceFiles="@(Lib)" DestinationFolder="$(PackageSourceNative)\lib\$(Platform)\$(PlatformToolset)\$(Configuration)\$(ApplicationType)\" />
+
+    <ItemGroup>
+        <Include Include="$(SolutionDir)\Release\include\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(Include)" DestinationFolder="$(PackageSourceNative)include\%(RecursiveDir)" />
+
+    <Copy SourceFiles="$(NuGetArtifactsPath)\cpprestsdk.props" DestinationFolder="$(PackageSourceNative)" />
+    <Copy SourceFiles="$(NuGetArtifactsPath)\cpprestsdk.targets" DestinationFolder="$(PackageSourceNative)" />
+
+    <XSLTransformation XmlInputPaths="$(NuGetArtifactsPath)cpprestsdk.nuspec" OutputPaths="$(MSBuildThisFileDirectory)bin\cpprestsdk.nuspec" XslContent="$(AdaptNuSpec)" />
+
+    <MakeDir Directories="$(PackageOutputDir)" />
+    <Exec Command="$(NuGetCommand) pack $(MSBuildThisFileDirectory)bin\cpprestsdk.nuspec -BasePath $(PackageSource) -OutputDirectory $(PackageOutputDir)" LogStandardErrorAsError="true" />
+  </Target>
+
+</Project>
