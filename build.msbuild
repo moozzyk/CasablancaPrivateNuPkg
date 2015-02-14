@@ -85,6 +85,9 @@
   </Target>
 
   <Target Name="UpdateSources">
+    <Exec Command="git submodule foreach git pull" />
+    <Exec Command="git checkout $(Branch)" WorkingDirectory="$(SolutionDir)" />
+    <Exec Command="git pull origin $(Branch)" WorkingDirectory="$(SolutionDir)" />
   </Target>
 
 </Project>
