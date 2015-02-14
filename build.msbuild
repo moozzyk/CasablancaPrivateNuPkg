@@ -15,12 +15,13 @@
     <PlatformToolset Condition="'$(PlatformToolset)' == ''">v$(VisualStudioVersionMajor)0</PlatformToolset>
     <ProjectDir>$(SolutionDir)Release\src\build\vs$(VisualStudioVersionMajor)\</ProjectDir>
     <ProjectFileName>casablanca$(PlatformToolset.Substring(1)).vcxproj</ProjectFileName>
-    <ProjectPath>$(ProjectDir)$(ProjectFileName)</ProjectPath>    
+    <ProjectPath>$(ProjectDir)$(ProjectFileName)</ProjectPath>
+    <Branch Condition="'$(Branch)' == ''">development</Branch>
   </PropertyGroup>
 
   <Import Project="$(MSBuildThisFileDirectory).nuget\nuget.targets" />
 
-  <Target Name="CreatePackage">
+  <Target Name="CreatePackage" DependsOnTargets="UpdateSources">
     <MSBuild Targets="_DownloadNuGet"
       Projects="$(MSBuildThisFileDirectory).nuget\NuGet.targets"
       Properties="SolutionDir=$(MSBuildThisFileDirectory)" />
@@ -48,7 +49,7 @@
     </PropertyGroup>
 
     <Exec Command="$(NuGetCommand) restore $(ProjectDir)packages.config -SolutionDirectory $(SolutionDir)" /> 
-      
+
     <MSBuild Targets="Build"
       Projects="$(ProjectPath)"
       Properties="Configuration=$(Configuration);Platform=$(Platform);PlatformToolset=$(PlatformToolset);OutputPath=$(OutputPath);OutDir=$(OutDir)" />
@@ -62,7 +63,7 @@
     <Copy SourceFiles="@(Lib)" DestinationFolder="$(PackageSourceNative)\lib\$(Platform)\$(PlatformToolset)\$(Configuration)\$(ApplicationType)\" />
 
     <ItemGroup>
-        <Include Include="$(SolutionDir)\Release\include\**\*.*" />
+      <Include Include="$(SolutionDir)\Release\include\**\*.*" />
     </ItemGroup>
     <Copy SourceFiles="@(Include)" DestinationFolder="$(PackageSourceNative)include\%(RecursiveDir)" />
 
@@ -72,7 +73,18 @@
     <XSLTransformation XmlInputPaths="$(NuGetArtifactsPath)cpprestsdk.nuspec" OutputPaths="$(MSBuildThisFileDirectory)bin\cpprestsdk.nuspec" XslContent="$(AdaptNuSpec)" />
 
     <MakeDir Directories="$(PackageOutputDir)" />
-    <Exec Command="$(NuGetCommand) pack $(MSBuildThisFileDirectory)bin\cpprestsdk.nuspec -BasePath $(PackageSource) -OutputDirectory $(PackageOutputDir)" LogStandardErrorAsError="true" />
+
+    <XmlPeek XmlInputPath="$(NuGetArtifactsPath)cpprestsdk.nuspec" Query="/package/metadata/version[1]/text()" Condition="'$(NuGetPackageVersion)' == ''">
+      <Output TaskParameter="Result" ItemName="OriginalNuGetPackageVersion" />
+    </XmlPeek>
+    <PropertyGroup>
+      <NuGetPackageVersion Condition="'$(NuGetPackageVersion)' == ''">@(OriginalNuGetPackageVersion)-$(Branch)</NuGetPackageVersion>
+    </PropertyGroup>
+
+    <Exec Command="$(NuGetCommand) pack $(MSBuildThisFileDirectory)bin\cpprestsdk.nuspec -BasePath $(PackageSource) -OutputDirectory $(PackageOutputDir) -Version $(NuGetPackageVersion)" LogStandardErrorAsError="true" />
+  </Target>
+
+  <Target Name="UpdateSources">
   </Target>
 
 </Project>
