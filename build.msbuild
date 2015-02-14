@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <DownloadNuGetExe>true</DownloadNuGetExe>
-    <SolutionDir>$(MSBuildThisFileDirectory)..\casablanca\</SolutionDir>
+    <SolutionDir>$(MSBuildThisFileDirectory)casablanca\</SolutionDir>
     <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
     <Platform Condition="'$(Platform)'==''">Win32</Platform>
     <PlatformToolset>v120</PlatformToolset>
