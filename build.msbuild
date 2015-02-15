@@ -2,7 +2,6 @@
 <Project ToolsVersion="12.0" DefaultTargets="CreatePackage" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <DownloadNuGetExe>true</DownloadNuGetExe>
     <SolutionDir>$(MSBuildThisFileDirectory)casablanca\</SolutionDir>
     <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
     <Platform Condition="'$(Platform)'==''">Win32</Platform>
@@ -21,11 +20,12 @@
 
   <Import Project="$(MSBuildThisFileDirectory).nuget\nuget.targets" />
 
-  <Target Name="CreatePackage" DependsOnTargets="UpdateSources">
+  <Target Name="CreatePackage" DependsOnTargets="UpdateSources"> 
+   
     <MSBuild Targets="_DownloadNuGet"
       Projects="$(MSBuildThisFileDirectory).nuget\NuGet.targets"
-      Properties="SolutionDir=$(MSBuildThisFileDirectory)" />
-   
+      Properties="SolutionDir=$(MSBuildThisFileDirectory);DownloadNuGetExe=true" />
+      
     <PropertyGroup>
       <PackageSource>$(MSBuildThisFileDirectory)bin\Package\</PackageSource>
       <PackageSourceNative>$(PackageSource)build\native\</PackageSourceNative>
@@ -85,7 +85,7 @@
   </Target>
 
   <Target Name="UpdateSources">
-    <Exec Command="git submodule foreach git pull" />
+    <Exec Command="git submodule update --init" />
     <Exec Command="git checkout $(Branch)" WorkingDirectory="$(SolutionDir)" />
     <Exec Command="git pull origin $(Branch)" WorkingDirectory="$(SolutionDir)" />
   </Target>

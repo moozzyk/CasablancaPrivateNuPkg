@@ -12,4 +12,4 @@ Configuration = Debug | Release
 PlatfromToolset = v120 | v110 | v140 etc. (see Casablanca source code for supported toolsets)
 ApplicationType = Desktop | WinRT etc. (see Casablanca source code for supported toolsets)
 Branch = branch to build the NuGet package from
-NuGetPackageVersion=The version of the package to be build - default is {package-version from-.nuspec}-{Branch} 
+NuGetPackageVersion=The version of the package to be build - default is {package-version from-.nuspec}-{Branch}
