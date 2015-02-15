@@ -70,9 +70,10 @@
     <Copy SourceFiles="$(NuGetArtifactsPath)\cpprestsdk.props" DestinationFolder="$(PackageSourceNative)" />
     <Copy SourceFiles="$(NuGetArtifactsPath)\cpprestsdk.targets" DestinationFolder="$(PackageSourceNative)" />
 
-    <XSLTransformation XmlInputPaths="$(NuGetArtifactsPath)cpprestsdk.nuspec" OutputPaths="$(MSBuildThisFileDirectory)bin\cpprestsdk.nuspec" XslContent="$(AdaptNuSpec)" />
+    <Copy SourceFiles="$(SolutionDir)ThirdPartyNotices.txt" DestinationFolder="$(PackageSource)license" />
+    <Copy SourceFiles="$(SolutionDir)Release\libs\websocketpp\COPYING" DestinationFolder="$(PackageSource)license\websocketpp" />
 
-    <MakeDir Directories="$(PackageOutputDir)" />
+    <XSLTransformation XmlInputPaths="$(NuGetArtifactsPath)cpprestsdk.nuspec" OutputPaths="$(MSBuildThisFileDirectory)bin\cpprestsdk.nuspec" XslContent="$(AdaptNuSpec)" />
 
     <XmlPeek XmlInputPath="$(NuGetArtifactsPath)cpprestsdk.nuspec" Query="/package/metadata/version[1]/text()" Condition="'$(NuGetPackageVersion)' == ''">
       <Output TaskParameter="Result" ItemName="OriginalNuGetPackageVersion" />
@@ -81,6 +82,7 @@
       <NuGetPackageVersion Condition="'$(NuGetPackageVersion)' == ''">@(OriginalNuGetPackageVersion)-$(Branch)</NuGetPackageVersion>
     </PropertyGroup>
 
+    <MakeDir Directories="$(PackageOutputDir)" />
     <Exec Command="$(NuGetCommand) pack $(MSBuildThisFileDirectory)bin\cpprestsdk.nuspec -BasePath $(PackageSource) -OutputDirectory $(PackageOutputDir) -Version $(NuGetPackageVersion)" LogStandardErrorAsError="true" />
   </Target>
 
